@@ -4,7 +4,7 @@ Title:
 Version: 1.0.0
 Date: 2023-01-04
 Depends: recluster, sf
-Imports: phylin, ClustGeo, fossil, gdistance, raster
+Imports: phylin, ClustGeo, fossil, gdistance, deldir, raster
 Author: Leonardo Dapporto
 Maintainer: Leonardo Dapporto <leondap@gmail.com>
 Description:
