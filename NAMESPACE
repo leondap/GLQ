@@ -1,2 +1,4 @@
 exportPattern("^[[:alpha:]]+")
 import(recluster)
+importFrom("phylin", idw)
+importFrom("ClustGeo", wardinit)
