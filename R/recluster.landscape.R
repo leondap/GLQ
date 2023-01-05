@@ -47,7 +47,7 @@ recluster.landscape<-function(mat,units=NULL,dist,transcorr,map_alt,map1,minsea=
 			try$delsgs[i,2]<-try$delsgs[i,2]+((0.043-abs(try$delsgs[i,2]-try$delsgs[i,4]))*sign(try$delsgs[i,2]-try$delsgs[i,4]))
 		}
 		patch<-shortestPath(transcorr, c(try$delsgs[i,1],try$delsgs[i,2]),c(try$delsgs[i,3],try$delsgs[i,4]),output="SpatialLines")
-		lines(patch,col="red")
+		#lines(patch,col="red")
 		pa<-as(patch, "sf")
 		nume<-round(st_length(pa)*30.36,0)
 		punti<-st_sample(pa,nume,type = "regular")
