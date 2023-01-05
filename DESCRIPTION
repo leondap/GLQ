@@ -10,6 +10,7 @@ Maintainer: Leonardo Dapporto <leondap@gmail.com>
 Description:
 License: GPL (>= 2.0)
 LazyLoad: yes
+LazyData: true
 URL: https://github.com/leondap/GLQ
 NeedsCompilation: no
 Packaged:
