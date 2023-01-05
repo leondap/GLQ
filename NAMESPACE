@@ -1,5 +1,6 @@
 exportPattern("^[[:alpha:]]+")
 import(recluster, sf, deldir)
+
 importFrom("phylin", idw)
 importFrom("ClustGeo", wardinit)
 importFrom("fossil", earth.dist)
