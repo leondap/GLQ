@@ -1,2 +1,3 @@
 exportPattern("^[[:alpha:]]+")
-import(recluster, iodatabase)
+import(recluster)
+importFrom("iodatabase", define.areas)
