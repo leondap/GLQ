@@ -4,7 +4,7 @@ Title:
 Version: 1.0.0
 Date: 2023-01-04
 Depends: recluster
-Imports: phylin
+Imports: phylin, ClustGeo
 Author: Leonardo Dapporto
 Maintainer: Leonardo Dapporto <leondap@gmail.com>
 Description:
