@@ -76,8 +76,9 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 					popu<-c(rep(1,length(which(datamatsp==areamatsp[n]))),rep(2,length(which(datamatsp==areamatsp[m]))))
 					fst<-recluster.fst(dista,popu,setzero=T,setnazero=T)
 					if(fst=="Hinter"){value<- (fst$Hinter^power)*(wei)}
-					if(fst=="DST"){value<- (fst$DST^power)*(wei)}
-					if(fst=="GST"){value<- (fst$DST^power)*(wei)}
+					if(fst=="DST"){value<-(fst$DST^power)*(wei)}
+					if(fst=="GST"){value<-(fst$DST^power)*(wei)}
+					if(fst=="Ht"){value<-(fst$Ht^power)*(wei)}
 					matrixGst[areamatsp[n], areamatsp[m],sp]<-value
 					matrixGst[areamatsp[m], areamatsp[n],sp]<-value
 				}
