@@ -1,4 +1,4 @@
-recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=NULL, minimum=3, minarea=2, nidw=15, gsttab=NULL, GST="all", alpha=0.1, power=2, powerW=1, powerD=1, poweridw=2, method="dist", methodclust="ward.D"){
+recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=NULL, minimum=3, minarea=2, fst<-Hinter, nidw=15, gsttab=NULL, GST="all", alpha=0.1, power=2, powerW=1, powerD=1, poweridw=2, method="dist", methodclust="ward.D"){
 	res<-NULL
 	species<-unique(spec)
 	specloc<-aggregate(rep(1,length(longi))~longi+lati+spec,FUN="sum")
@@ -74,7 +74,10 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 				for (m in (n+1):length(areamatsp)){
 					dista<-dismatsp[c(which(datamatsp==areamatsp[n]), which(datamatsp==areamatsp[m])),c(which(datamatsp==areamatsp[n]), which(datamatsp==areamatsp[m]))]
 					popu<-c(rep(1,length(which(datamatsp==areamatsp[n]))),rep(2,length(which(datamatsp==areamatsp[m]))))
-					value<-((recluster.fst(dista,popu,setzero=T,setnazero=T)$Hinter)^power)*(wei)
+					fst<-recluster.fst(dista,popu,setzero=T,setnazero=T)
+					if(fst=="Hinter"){value<- (fst$Hinter^power)*(wei)}
+					if(fst=="DST"){value<- (fst$DST^power)*(wei)}
+					if(fst=="GST"){value<- (fst$DST^power)*(wei)}
 					matrixGst[areamatsp[n], areamatsp[m],sp]<-value
 					matrixGst[areamatsp[m], areamatsp[n],sp]<-value
 				}
