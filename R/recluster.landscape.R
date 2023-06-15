@@ -50,7 +50,7 @@ recluster.landscape<-function(mat,units=NULL,dist,transcorr,map_alt,map1,minsea=
 		#lines(patch,col="red")
 		pa<-as(patch, "sf")
 		nume<-round(st_length(pa)*30.36,0)
-		punti<-st_sample(pa,nume,type = "regular")
+		punti<-st_sample(pa,as.numeric(nume),type = "regular")
 		coords<-(st_coordinates(punti)[,1:2])
 		coords<-rbind(c(10,10),coords)
 		value<-c(as.vector(extract(map1,coords)))
