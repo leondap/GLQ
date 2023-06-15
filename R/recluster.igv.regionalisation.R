@@ -1,9 +1,10 @@
-recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=NULL, minimum=3, minarea=2, fsttype="Hinter", nidw=15, gsttab=NULL, GST="all", alpha=0.1, power=2, powerW=1, powerD=1, poweridw=2, method="dist", methodclust="ward.D"){
+
+recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=NULL, minimum=2, minarea=2, fsttype="Hinter", modeldist="raw", spec_norm=1, gsttab=NULL, GST="all", power=2, method="dist", minshared=3, methodclust="ward.D"){
 	res<-NULL
 	species<-unique(spec)
 	specloc<-aggregate(rep(1,length(longi))~longi+lati+spec,FUN="sum")
 	specarea<-aggregate(rep(1,nrow(specloc))~specloc[,3],FUN="sum")
-
+	
 	#Identify species occurring in the minimum number of area and select the data
 	speciessel<-specarea[which(specarea[,2]>=minarea),1]
 	sel<-which(spec%in%speciessel)
@@ -11,6 +12,10 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 	lati<-lati[sel]
 	fasta<-fasta[sel]
 	species<-speciessel
+	if(!(is.null(gsttab))){
+      m<-match(species,names(gsttab))
+	gsttab<-gsttab[m]
+	}
 	spec<-spec[sel]
 	loca<-paste(longi,"_",lati)
 	areeun<-unique(loca)
@@ -40,12 +45,17 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 # Create the dissimilarity matrices for each species (Fig. S1, panel 4)
 
 	matrixGst<-array(NA,dim=c(nrow(aree),nrow(aree),length(species)))
+	matrixnum<-array(NA,dim=c(nrow(aree),nrow(aree),length(species)))
+	matrixgsttab<-array(NA,dim=c(nrow(aree),nrow(aree),length(species)))
+	matrixfreq<-array(NA,dim=c(nrow(aree),nrow(aree),length(species)))
+
+
 	areatabledissGst<-array(NA,dim=c(nrow(aree),nrow(aree)))
 	for (sp in 1:length(species)){
 		sel<-which(spec==species[sp])
 		fastared<-fasta[sel]
 		datamatsp<-loc[sel]
-		dismatsp<-as.matrix(dist.dna(fastared, model = "raw",pairwise.deletion = TRUE))
+		dismatsp<-as.matrix(dist.dna(fastared, model = modeldist,pairwise.deletion = TRUE))
 		areamatsp<-unique(datamatsp)
 
 # The contribution of a species can be weighted by its GST on the overall distribution
@@ -55,13 +65,14 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 		}
 		if(GST=="gd"){
 			if(is.null(gsttab)){
-				gstsp<-recluster.fst(as.dist(dismatsp),datamatsp,setzero=T,setnazero=T)$Gst
+				gsttab[sp]<-recluster.fst(as.dist(dismatsp),datamatsp,setzero=T,setnazero=T)$Gst
+				gstsp<-gsttab[sp]
 			}else{
 				gstsp<-gsttab[which(names(gsttab)==species[sp])]
 			}
 			wei<-(1-gstsp)
 		}
-		if(GST=="st"){
+		if(GST=="st" | method=="gstst"){
 			if(is.null(gsttab)){
 				gstsp<-recluster.fst(as.dist(dismatsp),datamatsp,setzero=T,setnazero=T)$Gst
 			}else{
@@ -74,13 +85,22 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 				for (m in (n+1):length(areamatsp)){
 					dista<-dismatsp[c(which(datamatsp==areamatsp[n]), which(datamatsp==areamatsp[m])),c(which(datamatsp==areamatsp[n]), which(datamatsp==areamatsp[m]))]
 					popu<-c(rep(1,length(which(datamatsp==areamatsp[n]))),rep(2,length(which(datamatsp==areamatsp[m]))))
-					fst<-recluster.fst(dista,popu,setzero=T,setnazero=T)
-					if(fsttype=="Hinter") {value<-(fst$Hinter^power)*(wei)}
-					if(fsttype=="Dst") {value<-(fst$Dst^power)*(wei)}
-					if(fsttype=="Gst") {value<-(fst$Gst^power)*(wei)}
-					if(fsttype=="Ht") {value<-(fst$Ht^power)*(wei)}
+					fst<-recluster.fst(dist=dista,vect=popu,setzero=T,setnazero=T)
+					if(fsttype=="Hinter") {value<-(fst$Hinter)}
+					if(fsttype=="Dst") {value<-(fst$Dst)}
+					if(fsttype=="Gst") {value<-(fst$Gst)}
+					if(fsttype=="Ht") {value<-(fst$Ht)}
 					matrixGst[areamatsp[n], areamatsp[m],sp]<-value
 					matrixGst[areamatsp[m], areamatsp[n],sp]<-value
+					matrixnum[areamatsp[n], areamatsp[m],sp]<-length(popu)
+					matrixnum[areamatsp[m], areamatsp[n],sp]<-length(popu)
+					matrixfreq[areamatsp[m], areamatsp[n],sp]<-length(areamatsp)
+					matrixfreq[areamatsp[n], areamatsp[m],sp]<-length(areamatsp)
+
+					if(!(is.null(gsttab))){
+						matrixgsttab[areamatsp[n], areamatsp[m],sp]<-gsttab[sp]
+						matrixgsttab[areamatsp[m], areamatsp[n],sp]<-gsttab[sp]
+					}
 				}
 			}
 		}
@@ -89,18 +109,39 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 #Compute the average between individual distance matrices (Figure S1, panel 5)
 
 	count<-areatabledissGst
+	GSTvalues<-areatabledissGst
+
 	for (r in 1: nrow(aree)){
 		for (c in 1: nrow(aree)){
-			count[r,c]<-length(which(!is.na(matrixGst[r,c,])))
-			if(count[r,c]>1){
-				if(method=="dist"){
-					areatabledissGst[r,c]<-(sum(matrixGst[r,c,],na.rm=T)^(1/power))/count[r,c]
-					areatabledissGst[c,r]<-(sum(matrixGst[r,c,],na.rm=T)^(1/power))/count[r,c]
-				}
+			specmat<-which(!is.na(matrixGst[r,c,]))
+			count[r,c]<-length(specmat)
+			GSTvalues[r,c]<-sum(gsttab[specmat])
+			denominatore<-count[r,c]
+			if(method=="mean"){
+			denominatore<-count[r,c]
+			}
+			
+			if(count[r,c]>= minshared){
 				if(method=="mean"){
-					areatabledissGst[r,c]<-mean(matrixGst[r,c,],na.rm=T)
-					areatabledissGst[c,r]<-mean(matrixGst[r,c,],na.rm=T)
+					areatabledissGst[r,c]<-(sum(matrixGst[r,c,]^power,na.rm=T)/denominatore)^(1/power)
+					areatabledissGst[c,r]<-(sum(matrixGst[r,c,]^power,na.rm=T)/denominatore)^(1/power)
 				}
+				if(method=="dist2"){
+					areatabledissGst[r,c]<-(sum(matrixGst[r,c,]^power*(log(matrixnum[r,c,]))^power, na.rm=T)/sum(log(matrixnum[r,c,])^power, na.rm=T))^(1/power)
+					areatabledissGst[c,r]<-(sum(matrixGst[r,c,]^power*(log(matrixnum[r,c,]))^power, na.rm=T)/sum(log(matrixnum[r,c,])^power, na.rm=T))^(1/power)
+				}
+				if(method=="gstst"){
+					areatabledissGst[r,c]<-(sum((matrixGst[r,c,]^power)*(matrixgsttab[r,c,]^power), na.rm=T)/sum((matrixgsttab[r,c,]^power), na.rm=T))^(1/power)
+					areatabledissGst[c,r]<-(sum((matrixGst[r,c,]^power)*(matrixgsttab[r,c,]^power), na.rm=T)/sum((matrixgsttab[r,c,]^power), na.rm=T))^(1/power)
+
+				}
+				if(method=="freq"){
+					areatabledissGst[r,c]<-(sum((matrixGst[r,c,]^power)*(log(matrixfreq[r,c,])^power), na.rm=T)/sum(log(matrixfreq[r,c,]^power), na.rm=T))^(1/power)
+					areatabledissGst[c,r]<-(sum((matrixGst[r,c,]^power)*(log(matrixfreq[r,c,])^power), na.rm=T)/sum(log(matrixfreq[r,c,]^power), na.rm=T))^(1/power)
+
+				}
+
+						
 				if(method=="median"){
 					areatabledissGst[r,c]<-median(matrixGst[r,c,],na.rm=T)
 					areatabledissGst[c,r]<-median(matrixGst[r,c,],na.rm=T)
@@ -109,68 +150,58 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 		}
 	}
 
-# Select the areas with enough data for igw (Fig S1, panel 6)
 
-	matnew<-areatabledissGst
-	rich<-aggregate(rep(1,length(loc))~loc+spec,FUN="sum")
-	richness<-aggregate(rep(1,nrow(rich))~rich[,1],FUN="sum")
-	sitiguida<-which(richness[,2]>=minimum)
-	guida<-rep(0,nrow(richness))
-	guida[sitiguida]<-1
-	rich<-richness[,2]
-	areeg<-cbind(aree,rich,guida)
-	distance<-rep(1,nrow(areeg))
-	aree2<-NULL
-	k<-1
+# Select the areas with complete data
 
-# Compute igw and fill the empty areas (Fig S1, panel 7)
+matnew<-areatabledissGst
 
-	for (qua in 1:nrow(matnew)){
-		present<-matnew[,qua]
-		tabella<-cbind(areeg,present)
-		tabella<-tabella[-qua,]
-		tabella<-tabella[which(tabella$guida==1),]
-		if(length(which(!is.na(tabella$present)))>=nidw){
-			tabella<-tabella[complete.cases(tabella),]
-			res1 <- idw(as.numeric(tabella$present), cbind(as.numeric(tabella[,2]),as.numeric(tabella[,3])),cbind(as.numeric(areeg[,2]),as.numeric(areeg[,3])),p=poweridw)
-			distance<-cbind(distance,res1)
-			aree2[k]<-as.character(areeg[qua,1])
-			k<-k+1
-		}
-	}
+rich<-aggregate(rep(1,length(loc))~loc+spec,FUN="sum")
+richness<-aggregate(rep(1,nrow(rich))~rich[,1],FUN="sum")
+sitiguida<-which(richness[,2]>= minimum)
+guida<-rep(0,nrow(richness))
+guida[sitiguida]<-1
+rich<-richness[,2]
+areeg<-cbind(aree,rich,guida)
+distance<-rep(1,nrow(areeg))
 
-# Adjust the matrix and make it symmetric (Fig S1, panel 8)
-	aree2<-as.numeric(aree2)
-	distance<-distance[aree2,]
-	distance<-distance[,-1]
-	areefin<-sitiguida[which(sitiguida %in% aree2)]
-	sel<-which(rownames(distance)%in%areefin)
-	dist<-distance[sel,sel]
-	mat<-matrix(NA,nrow(dist),nrow(dist))
-	for(row in 1:nrow(mat)){
-		for(col in 1:ncol(mat)){
-			mat[row,col]<-(dist[row,col]+dist[col,row])/2
-		}
-	}
-# Compute geographic distances among areas and compute clustering with soft contiguity constraints  (Fig S1, panel 8)
-	dista<-as.dist(mat)
-	select<-as.numeric(rownames(dist))
-	coord<-areeg[select,]
-	if(!(is.null(longr)) & !(is.null(latr))){
-		distgeo<-(dist(coord[,5:6]))^powerD
-	}else{
-		distgeo<-(dist(coord[,2:3]))^powerD
-	}
-	clust<-hclustgeo2(dista,distgeo,alpha=alpha,w=coord$rich^powerW,method=methodclust)
+selarea<-which(areeg[,8]==1)
+areegs<-areeg[selarea,]
+tabgstsel<-areatabledissGst[selarea,selarea]
+diag(tabgstsel)<-0
+matnewna<-tabgstsel
+matnewna[!(is.na(matnewna))]<-0
+matnewna[(is.na(matnewna))]<-1
+nasum<-rowSums(matnewna)
+perc1<-(nasum/length(nasum))*100
 
-# Organise the results
+selecta<-c(1:nrow(tabgstsel))
+righe<-nrow(tabgstsel)
+tabgstselu<-tabgstsel
 
-	res$richness<-coord$rich
-	res$tree <- clust$solution
-	res$weightmatrix<-clust$weighteddiss
-	res$dist<-dista
-	res$distgeo<-distgeo
-	res$coord<-cbind(as.numeric(coord[,2]),as.numeric(coord[,3]))
+for(add in 1:righe){
+matnewna<-tabgstselu
+matnewna[!(is.na(matnewna))]<-0
+matnewna[(is.na(matnewna))]<-1
+nasum<-rowSums(matnewna)
+perc<-(nasum/length(nasum))*100
+if(sum(perc)==0){
+break
+}
+togli<-which.max(perc)
+selecta<-selecta[-togli]
+tabgstselu<-tabgstselu[-togli,-togli]
+}
+
+areegs2<-areegs[selecta,]
+tabgstsel2<-tabgstsel[selecta,selecta]
+areegs2<-areegs[selecta,]
+removed<-rep(0,nrow(areegs))
+removed[selecta]<-1
+imputed<-as.dist(tabgstsel2)
+	res$dist<-imputed
+	res$allareas<-cbind(areegs,removed,perc1)
+	res$alldist<-tabgstsel
+	res$areas<-areegs2
 	res$originalcoord<-cbind(longi,lati)
 	res$originalsequences<-fasta
 	res$originalspec<-spec
@@ -178,46 +209,7 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 	res$minarea<-minarea
 	res$gsttab<-gsttab
 	res$GST<-GST
-	res$alpha<-alpha
 	res$power<-power
-	res$powerW<-powerW
 	res$method<-method
 	return(res)
-}
-
-
-
-hclustgeo2<-function (D0, D1 = NULL, alpha = 0, scale = TRUE, wt = NULL, method="ward.D") 
-{
-res<-NULL    
-if (class(D0) != "dist") 
-        stop("DO must be of class dist (use as.dist)", 
-            call. = FALSE)
-    if (!is.null(D1) && (class(D1) != "dist")) 
-        stop("D1 must be of class dist (use as.dist)", 
-            call. = FALSE)
-    n <- as.integer(attr(D0, "Size"))
-    if (is.null(n)) 
-        stop("invalid dissimilarities", call. = FALSE)
-    if (is.na(n) || n > 65536L) 
-        stop("size cannot be NA nor exceed 65536", call. = FALSE)
-    if (n < 2) 
-        stop("must have n >= 2 objects to cluster", call. = FALSE)
-    if (!is.null(D1) && length(D0) != length(D1)) 
-        stop("the two dissimilarity structures must have the same size", 
-            call. = FALSE)
-    if ((max(alpha) > 1) || (max(alpha) < 0)) 
-        stop("Values alpha must be in [0,1]", call. = FALSE)
-    if ((scale == TRUE) && (!is.null(D1))) {
-        D0 <- D0/max(D0)
-        D1 <- D1/max(D1)
-    }
-    delta0 <- wardinit(D0, wt)
-    if (!is.null(D1)) 
-        delta1 <- wardinit(D1, wt)
-    else delta1 <- 0
-    delta <- (1 - alpha) * delta0 + alpha * delta1
-    res$solution <- hclust(delta, method = method, members = wt)
-	res$weighteddiss<-delta
-    return(res)
 }
