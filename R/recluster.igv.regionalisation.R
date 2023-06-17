@@ -90,10 +90,14 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 					if(fsttype=="Dst") {value<-(fst$Dst)}
 					if(fsttype=="Gst") {value<-(fst$Gst)}
 					if(fsttype=="Ht") {value<-(fst$Ht)}
+					specinum<-length(popu)
+					if(specinum > 15){
+						specinum<-16
+					}
 					matrixGst[areamatsp[n], areamatsp[m],sp]<-value
 					matrixGst[areamatsp[m], areamatsp[n],sp]<-value
-					matrixnum[areamatsp[n], areamatsp[m],sp]<-length(popu)
-					matrixnum[areamatsp[m], areamatsp[n],sp]<-length(popu)
+					matrixnum[areamatsp[n], areamatsp[m],sp]<-specinum
+					matrixnum[areamatsp[m], areamatsp[n],sp]<-specinum
 					matrixfreq[areamatsp[m], areamatsp[n],sp]<-length(areamatsp)
 					matrixfreq[areamatsp[n], areamatsp[m],sp]<-length(areamatsp)
 
@@ -113,6 +117,8 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 
 	for (r in 1: nrow(aree)){
 		for (c in 1: nrow(aree)){
+#r<-1
+#c<-46
 			specmat<-which(!is.na(matrixGst[r,c,]))
 			count[r,c]<-length(specmat)
 			GSTvalues[r,c]<-sum(gsttab[specmat])
@@ -127,8 +133,8 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 					areatabledissGst[c,r]<-(sum(matrixGst[r,c,]^power,na.rm=T)/denominatore)^(1/power)
 				}
 				if(method=="dist2"){
-					areatabledissGst[r,c]<-(sum(matrixGst[r,c,]^power*(log(matrixnum[r,c,]))^power, na.rm=T)/sum(log(matrixnum[r,c,])^power, na.rm=T))^(1/power)
-					areatabledissGst[c,r]<-(sum(matrixGst[r,c,]^power*(log(matrixnum[r,c,]))^power, na.rm=T)/sum(log(matrixnum[r,c,])^power, na.rm=T))^(1/power)
+					areatabledissGst[r,c]<-(sum(matrixGst[r,c,]^power*(log(matrixnum[r,c,],2))^power, na.rm=T)/sum(log(matrixnum[r,c,],2)^power, na.rm=T))^(1/power)
+					areatabledissGst[c,r]<-(sum(matrixGst[r,c,]^power*(log(matrixnum[r,c,],2))^power, na.rm=T)/sum(log(matrixnum[r,c,],2)^power, na.rm=T))^(1/power)
 				}
 				if(method=="gstst"){
 					areatabledissGst[r,c]<-(sum((matrixGst[r,c,]^power)*(matrixgsttab[r,c,]^power), na.rm=T)/sum((matrixgsttab[r,c,]^power), na.rm=T))^(1/power)
@@ -136,8 +142,8 @@ recluster.igv.regionalisation<-function(fasta,spec,longi,lati, longr=NULL, latr=
 
 				}
 				if(method=="freq"){
-					areatabledissGst[r,c]<-(sum((matrixGst[r,c,]^power)*(log(matrixfreq[r,c,])^power), na.rm=T)/sum(log(matrixfreq[r,c,]^power), na.rm=T))^(1/power)
-					areatabledissGst[c,r]<-(sum((matrixGst[r,c,]^power)*(log(matrixfreq[r,c,])^power), na.rm=T)/sum(log(matrixfreq[r,c,]^power), na.rm=T))^(1/power)
+					areatabledissGst[r,c]<-(sum((matrixGst[r,c,]^power)*(log(matrixfreq[r,c,])^power), na.rm=T)/sum(log(matrixfreq[r,c,])^power, na.rm=T))^(1/power)
+					areatabledissGst[c,r]<-(sum((matrixGst[r,c,]^power)*(log(matrixfreq[r,c,])^power), na.rm=T)/sum(log(matrixfreq[r,c,])^power, na.rm=T))^(1/power)
 
 				}
 
@@ -213,3 +219,5 @@ imputed<-as.dist(tabgstsel2)
 	res$method<-method
 	return(res)
 }
+
+
