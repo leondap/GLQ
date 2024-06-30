@@ -58,7 +58,7 @@ recluster.landscape<-function(mat,units=NULL,dist,transcorr,map_alt,map1,minsea=
 		val<-cbind(coords,value,altitudes)
 		altimin[i]<-min(val[,4],na.rm=T)
 		altimax[i]<-max(val[,4],na.rm=T)
-		lengthpath[i]<-nume
+		lengthpath[i] <- st_length(pa)*0.001
 		if(nume==1){
 			midpointx[i]<-(try$delsgs[i,1]+try$delsgs[i,3])/2
 			midpointy[i]<-(try$delsgs[i,2]+try$delsgs[i,4])/2
@@ -80,7 +80,7 @@ recluster.landscape<-function(mat,units=NULL,dist,transcorr,map_alt,map1,minsea=
 			line<-which.max(tabe[,3])[1]
 			midpointx[i]<-as.numeric(val[round((lengthpath[i]+0.0001)/2,0),1])
 			midpointy[i]<-as.numeric(val[round((lengthpath[i]+0.0001)/2,0),2])
-			lengthsea[i]<-sum(tabe[,3])
+			lengthsea[i]<-sum(tabe[,3])/3
 			if(lengthsea[i]>0){
 				seapointx[i]<-as.numeric(val[round((tabe[line,1]+tabe[line,2])/2,0),1])
 				seapointy[i]<-as.numeric(val[round((tabe[line,1]+tabe[line,2])/2,0),2])
