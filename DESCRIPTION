@@ -3,7 +3,7 @@ Type: Package
 Title: 
 Version: 1.0.0
 Date: 2023-01-04
-Depends: recluster, sf, deldir, phylin, ClustGeo, fossil, gdistance
+Depends: recluster, sf, deldir, phylin, ClustGeo, fossil, gdistance, sp
 Imports: 
 Author: Leonardo Dapporto
 Maintainer: Leonardo Dapporto <leondap@gmail.com>
