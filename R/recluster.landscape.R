@@ -31,7 +31,7 @@ recluster.landscape<-function (mat, units = NULL, dist, transcorr=null, map_alt,
 			try$delsgs[i, 2] <- try$delsgs[i, 2] + ((0.043 - abs(try$delsgs[i, 2] - try$delsgs[i, 4])) * sign(try$delsgs[i, 2] - try$delsgs[i, 4]))
 		}
 		if(!(is.null(transcorr))){
-			patch <- shortestPath(transcorr, c(try$delsgs[i, 1], try$delsgs[i, 2]), c(try$delsgs[i, 3], try$delsgs[i, 4]), output = "SpatialLines")
+			patch <- gdistance::shortestPath(transcorr, c(try$delsgs[i, 1], try$delsgs[i, 2]), c(try$delsgs[i, 3], try$delsgs[i, 4]), output = "SpatialLines")
 			pa <- as(patch, "sf")
 			st_crs(pa) <- 4326
 		}else{
