@@ -20,7 +20,7 @@ recluster.landscape<-function (mat, units = NULL, dist, transcorr=null, map_alt,
 	if(plot){
 		plot(mat)
 		if(!(is.null(mapplot))){
-			plot(mapplot, add=T)
+			sp::plot(mapplot, add=T)
 		}
 	}
 	for (i in 1:nrow(try$delsgs)) {
