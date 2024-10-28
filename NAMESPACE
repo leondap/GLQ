@@ -1,5 +1,5 @@
 exportPattern("^[[:alpha:]]+")
-import("recluster", "sf", "deldir", "phylin", "ClustGeo", "fossil", "gdistance")
+imports("recluster", "sf", "deldir", "phylin", "ClustGeo", "fossil", "gdistance", "sp")
 
 #importFrom("phylin", idw)
 #importFrom("ClustGeo", wardinit)
