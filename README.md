@@ -14,8 +14,8 @@ XXXXXXXXXX
 A workspace containing all analyses (excluding FEEMS runs) is also included.
 Please note the following considerations:
 
-The workspace was re-run and saved in November 2024, after updates to several R packages.
-Some analyses involve random selection of specimens and random ordination of datasets.
+- The workspace was re-run and saved in November 2024 after updates to several R packages and the replacement of some functions from packages no longer available on the CRAN repository (e.g., rgdal).
+- Some analyses involve random selection of specimens and random ordination of datasets.
 As a result, minor differences compared to the results published in the original paper may be observed.
 
 To install GLQ you also need to install recluster and iodatabase. Use:
